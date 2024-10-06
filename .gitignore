@@ -1,0 +1,32 @@
+# Plastic SCM ignore file for Unity projects
+
+# Ignore the Library folder (generated files)
+Library/
+
+# Ignore builds
+Builds/
+
+# Ignore Logs
+Logs/
+
+# Ignore user-specific settings
+UserSettings/
+
+# Ignore temporary files and metadata
+[Tt]emp/
+[Oo]bj/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.VC.db
+
+# Ignore packed Addressables
+/[Aa]sset[Bb]undles/
