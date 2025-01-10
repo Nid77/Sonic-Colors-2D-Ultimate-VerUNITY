@@ -40,7 +40,7 @@ public class SonicMovement : MonoBehaviour
     public bool isGrounded; // si sonic est sur le sol
     private bool isTakingDamage = false;
     public bool fliped = false;
-    public bool InirtiaPossible=false;
+    public bool InertiaPossible=false;
     public bool isLower=false; // Si sonic se baisse
     public bool SpinDash=false;//Si sonic peut faire un spindash
     private float offsetFlipChange = 30f; // A partir de quel val il peut prendre l'inertie
@@ -54,6 +54,7 @@ public class SonicMovement : MonoBehaviour
     public float rayThickness = 0.1f; // Épaisseur des rayon
     public float xOffsetWallCollision = 0.1f; // Décalage horizontal pour le point de départ des rayons
     private BoxCollider2D boxCollider; // ca boite de collision ( qui prend en compte l'ajustement des sprite )
+    private CapsuleCollider2D capsuleCollider;
     public LayerMask collisionWallMask; // Detecter quel layer ?
     RaycastHit2D hitLeft;
     RaycastHit2D hitRight;
@@ -79,6 +80,7 @@ public class SonicMovement : MonoBehaviour
         collisionGroundLayer = 1 << LayerMask.NameToLayer("Background");
         collisionWallMask = 1 << LayerMask.NameToLayer("Background");
         boxCollider = GetComponent<BoxCollider2D>();
+        capsuleCollider = GetComponent<CapsuleCollider2D>();
 
         currentSpeed = baseSpeed;
     }
@@ -146,8 +148,7 @@ public class SonicMovement : MonoBehaviour
         }
 
 
-        // Animation        
-
+        // Animation
         animator.SetBool("isGrounded",isGrounded);
         animator.SetBool("isjumping",isJumping);
         animator.SetFloat("speed",currentSpeed);
@@ -184,15 +185,17 @@ public class SonicMovement : MonoBehaviour
 
 
         // Detecter su sonic touche un mur sur le cote droit et gauche
-        float rayLength = boxCollider.size.y;
-        Vector2 leftRayOrigin = new Vector2(boxCollider.bounds.min.x - xOffsetWallCollision, boxCollider.bounds.center.y);
-        Vector2 rightRayOrigin = new Vector2(boxCollider.bounds.max.x + xOffsetWallCollision, boxCollider.bounds.center.y);
+        float rayLength = capsuleCollider.size.y;
+        Vector2 leftRayOrigin = new Vector2(capsuleCollider.bounds.min.x - xOffsetWallCollision, capsuleCollider.bounds.center.y);
+        Vector2 rightRayOrigin = new Vector2(capsuleCollider.bounds.max.x + xOffsetWallCollision, capsuleCollider.bounds.center.y);
+
 
         hitLeft = Physics2D.Raycast(leftRayOrigin, Vector2.up, rayLength, collisionWallMask);
         if (hitLeft.collider != null)
         {
             rb.velocity = new Vector2(0, rb.velocity.y);
             currentSpeed = baseSpeed;
+            Debug.Log("Collide left");
         }
 
          hitRight = Physics2D.Raycast(rightRayOrigin, Vector2.up, rayLength, collisionWallMask);
@@ -200,6 +203,7 @@ public class SonicMovement : MonoBehaviour
         {
            rb.velocity = new Vector2(0, rb.velocity.y);
            currentSpeed = baseSpeed;
+           Debug.Log("Collide right");
         }
 
         Debug.DrawRay(leftRayOrigin, Vector2.up * rayLength, Color.red);
@@ -212,14 +216,14 @@ public class SonicMovement : MonoBehaviour
 
         //Application de l'inertie en fonction de certaines conditions
         //LA condition c'est si il n'appuie sur les boutons / si il fait un spindahs ou il change de cote
-        if ( (!controller.keyDictionary["Right"] && !controller.keyDictionary["Left"]) || InirtiaPossible || SpinDash ){
+        if ( (!controller.keyDictionary["Right"] && !controller.keyDictionary["Left"]) || InertiaPossible || SpinDash ){
             if(currentSpeed>baseSpeed){ 
                 currentSpeed -= ((currentSpeed * Inertia) * Time.deltaTime);
                 currentSpeed = Mathf.Clamp(currentSpeed, baseSpeed, maxSpeed);
             }
 
-            if(currentSpeed==baseSpeed && InirtiaPossible){
-                InirtiaPossible=false;
+            if(currentSpeed==baseSpeed && InertiaPossible){
+                InertiaPossible=false;
                 animator.SetTrigger("unflip");
             }
             
@@ -231,7 +235,7 @@ public class SonicMovement : MonoBehaviour
                 lastSpeedDirection=1;
             }
 
-            if (currentSpeed < maxSpeed && isGrounded){
+            if (currentSpeed < maxSpeed){
                 currentSpeed += (speedIncreaseRate * Time.deltaTime);
             }
            
@@ -243,14 +247,13 @@ public class SonicMovement : MonoBehaviour
     public void Jump(float jumpForce){
         
         rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-        //rb.velocity = new Vector2(rb.velocity.x, jumpForce);
         //rb.AddForce(Vector2.left * rb.velocity.x * airResistance, ForceMode2D.Impulse); 
     }
 
-    public void HomingAttack(){
+    public void HomingAttack()
+    {
         
-        if (targeted!=null)
-        {
+        if (targeted!=null){
             transform.position = Vector2.MoveTowards(transform.position, targeted.transform.position, homingSpeed * Time.deltaTime);
         }else{
             MoveHoming = false;
@@ -288,7 +291,7 @@ public class SonicMovement : MonoBehaviour
         }
 
         if(fliped && currentSpeed>baseSpeed+offsetFlipChange){
-            InirtiaPossible=true;
+            InertiaPossible=true;
             animator.SetTrigger("flip");
         }
         
@@ -297,20 +300,25 @@ public class SonicMovement : MonoBehaviour
     
     public GameObject FindNearEnenmy(){
         
-        GameObject objProche=null;
+        GameObject nearObj=null;
 
         foreach(GameObject obj in SonicActions.instance.objs) {
 
-            if(objProche==null && !IsObstacleBetween(obj) ){
-                objProche=obj;
-            }else if (objProche!=null){
-                if(Vector3.Distance(gameObject.transform.position, obj.transform.position) < Vector3.Distance(gameObject.transform.position, objProche.transform.position) && !IsObstacleBetween(obj)) {
-                    objProche=obj;
+            if (!IsObstacleBetween(obj)){
+                if (nearObj == null)
+                {
+                    nearObj = obj;
+                }
+                else{
+                    if (Vector3.Distance(gameObject.transform.position, obj.transform.position) < Vector3.Distance(gameObject.transform.position, nearObj.transform.position))
+                    {
+                        nearObj = obj;
+                    }
                 }
             }
         }
 
-       return objProche; 
+       return nearObj; 
     }
 
     public bool IsObstacleBetween(GameObject obstacle){

@@ -14,12 +14,12 @@ GameObject:
   - component: {fileID: 9196681893960556017}
   - component: {fileID: 4584741991525372409}
   m_Layer: 8
-  m_Name: ring
+  m_Name: Ring
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &3317080179887137433
 Transform:
   m_ObjectHideFlags: 0

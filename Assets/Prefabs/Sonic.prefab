@@ -120,38 +120,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a168042c5d0f59c4fa909037240a50b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseSpeed: 25
-  speedIncreaseRate: 20
-  maxSpeed: 100
-  currentSpeed: 0
-  TrueSpeed: 0
-  Inertia: 60
-  airResistance: 1
-  lastSpeed: 0
   rb: {fileID: 6298111798094358825}
-  isJumping: 0
-  isGrounded: 0
-  jumpForce: 70
-  groundCheck: {fileID: 1107505941054107622}
-  groundCheckRadius: 1.4
-  colisionLayer:
-    serializedVersion: 2
-    m_Bits: 8
-  animator: {fileID: 1518555009502582003}
   spriteRenderer: {fileID: 7039452062257960295}
-  horizonMov: 0
   controller: {fileID: 2173106720116293678}
   targeted: {fileID: 0}
-  homingattack: 0
+  animator: {fileID: 1518555009502582003}
+  currentSpeed: 0
+  baseSpeed: 15
+  speedIncreaseRate: 20
+  maxSpeed: 80
+  TrueSpeed: 0
+  Inertia: 1.5
+  airResistance: 1
+  lastSpeedDirection: 0
+  knockbackDistance: 80
+  jumpForce: 70
+  horizonMov: 0
+  homingAttackPossible: 0
   MoveHoming: 0
   MoveJump: 0
   homingSpeed: 80
   isfalling: 0
-  knockbackDistance: 80
+  isJumping: 0
+  isGrounded: 0
   fliped: 0
-  flipSpeed: 0
+  InertiaPossible: 0
   isLower: 0
   SpinDash: 0
+  collisionGroundLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  groundCheck: {fileID: 1107505941054107622}
+  groundCheckRadius: 1.4
+  rayThickness: 0.1
+  xOffsetWallCollision: 0.1
+  collisionWallMask:
+    serializedVersion: 2
+    m_Bits: 8
 --- !u!50 &6298111798094358825
 Rigidbody2D:
   serializedVersion: 4
@@ -277,7 +282,7 @@ BoxCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 400149721182418780}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
@@ -302,7 +307,7 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.003078796, y: 0.18188484}
+  m_Offset: {x: -0.0007601604, y: 0.18188484}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0}
@@ -313,7 +318,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.27536917, y: 0.32623038}
+  m_Size: {x: 0.2611102, y: 0.32623038}
   m_EdgeRadius: 0
 --- !u!114 &419232140419500076
 MonoBehaviour:
