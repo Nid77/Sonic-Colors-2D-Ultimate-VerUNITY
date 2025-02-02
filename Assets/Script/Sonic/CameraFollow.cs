@@ -14,11 +14,11 @@ public class CameraFollow : MonoBehaviour
     public static CameraFollow instance;
 
     private void Awake(){
-        if(instance!=null){
-            Debug.Log("Plus d'une instance de SonicMovement dans la scene");
+        if(instance==null){
+            instance = this;
         }
 
-        instance = this;
+        
     }
     void Update()
     {   

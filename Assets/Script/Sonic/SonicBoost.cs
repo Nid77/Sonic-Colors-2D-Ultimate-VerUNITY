@@ -13,11 +13,10 @@ public class SonicBoost : MonoBehaviour
 
 
     private void Awake(){
-        if(instance!=null){
-            Debug.Log("Plus d'une instance dans la scene");
+        if(instance==null){
+            instance = this;
         }
-
-        instance = this;
+        
     }
     
     void Start()
@@ -47,9 +46,6 @@ public class SonicBoost : MonoBehaviour
     }
 
     public bool ZeroBoost(){
-        if(currentboost==0){
-            return true;
-        }
-        return false;
+        return currentboost == 0;
     }
 }

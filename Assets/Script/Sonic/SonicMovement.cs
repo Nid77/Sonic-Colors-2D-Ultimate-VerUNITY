@@ -14,15 +14,21 @@ public class SonicMovement : MonoBehaviour
 
     //Physic Value
     public float currentSpeed; 
-    public float baseSpeed; // vitesse de base de sonic ( pas 0 sinon ya pas d'inertie quand il demare et c'est long )
-    public float speedIncreaseRate ; // Taux d'augmentation de la vitesse par seconde
-    public float maxSpeed ; // Vitesse maximale du personnage
-    public float TrueSpeed; // valeur en prenant en compte le decalage (currentSpeed + basespeed )
-    public float Inertia = 1.5f ; // l'inertie quand il change de cote ou arete de courir 
+    public float speedIncreaseRate;     // Taux d'augmentation de la vitesse par seconde
+    public float TrueSpeed;             // valeur en prenant en compte le decalage (currentSpeed + basespeed )
+    public float maxSpeed;              // Vitesse max
+    public float baseSpeed;             // vitesse de base de sonic ( pas 0 sinon ya pas d'inertie quand il demare et c'est long )
+    public float cruiseSpeed = 15f;     // Vitesse de croisière
+    public float boostSpeed = 40f;      // Vitesse avec Boost
+    public float acceleration = 2f;     // Accélération normale
+    public float deceleration = 3f;     // Décélération quand on arrête
+    private SpeedPhase currentPhase = SpeedPhase.Slow;
+
+    public float Inertia = 1.5f ;       // l'inertie quand il change de cote ou arete de courir 
     public float airResistance;
-    public float lastSpeedDirection; // Sutout pour connaitre la direction de sonic
+    public float lastSpeedDirection;    
     public float knockbackDistance=80f;   
-    public float jumpForce; // puissance de saut
+    public float jumpForce; 
     
     
     //Move Input
@@ -31,35 +37,45 @@ public class SonicMovement : MonoBehaviour
 
      
     //Action value 
-    public bool homingAttackPossible=false; // Si le homingAttackPossible est possible
-    public bool MoveHoming=false; // Faire le homing attack dans le FixedUpdate
-    public bool MoveJump=false; // Faire le jump dans le FixedUpdate
+    public bool homingAttackPossible=false; 
+    public bool isHomingAttack=false;   // Faire le homing attack dans le FixedUpdate
+    public bool MoveJump=false;         // Faire le jump dans le FixedUpdate
     public float homingSpeed; 
-    public bool isfalling; // si sonic tombe
-    public bool isJumping=false; // si sonic saute
-    public bool isGrounded; // si sonic est sur le sol
+    public bool isfalling; 
+    public bool isJumping=false;
+    public bool isGrounded; 
     private bool isTakingDamage = false;
     public bool fliped = false;
     public bool InertiaPossible=false;
-    public bool isLower=false; // Si sonic se baisse
-    public bool SpinDash=false;//Si sonic peut faire un spindash
-    private float offsetFlipChange = 30f; // A partir de quel val il peut prendre l'inertie
+    public bool isLower=false; 
+    public bool SpinDash=false;
+    private float offsetFlipChange = 30f;// A partir de quel val il peut prendre l'inertie
 
 
     //Collision
-    private LayerMask layersToIgnoreHomingAttack; // Layers a ignoré ( surtout pour la detection d'ennemi )
-    public LayerMask collisionGroundLayer; // Layer dans lequel on detecte le sol
-    public Transform groundCheck; // variable qui sert a savoir si sonic touche le sol
+    private LayerMask layersToIgnoreHomingAttack;
+    public LayerMask collisionGroundLayer;
+    public Transform groundCheck; 
     public float groundCheckRadius;
-    public float rayThickness = 0.1f; // Épaisseur des rayon
-    public float xOffsetWallCollision = 0.1f; // Décalage horizontal pour le point de départ des rayons
-    private BoxCollider2D boxCollider; // ca boite de collision ( qui prend en compte l'ajustement des sprite )
+    public float rayThickness = 0.1f; 
+    public float xOffsetWallCollision = 0.1f;
     private CapsuleCollider2D capsuleCollider;
-    public LayerMask collisionWallMask; // Detecter quel layer ?
+    public LayerMask collisionWallMask;
     RaycastHit2D hitLeft;
     RaycastHit2D hitRight;
 
-    
+
+    public enum SpeedPhase
+    {
+        Slow,          // Lent
+        Accelerating,  // Accélération
+        Cruising,      // Vitesse de croisière
+        MaxSpeed,      // Vitesse maximale
+        Boosting       // Boost activé
+    }
+
+
+
 
     private void Awake(){
         if(instance!=null){
@@ -79,9 +95,7 @@ public class SonicMovement : MonoBehaviour
         layersToIgnoreHomingAttack = LayerMask.GetMask("Enemy", "Player", "UI");
         collisionGroundLayer = 1 << LayerMask.NameToLayer("Background");
         collisionWallMask = 1 << LayerMask.NameToLayer("Background");
-        boxCollider = GetComponent<BoxCollider2D>();
         capsuleCollider = GetComponent<CapsuleCollider2D>();
-
         currentSpeed = baseSpeed;
     }
 
@@ -105,7 +119,8 @@ public class SonicMovement : MonoBehaviour
         if (controller.keyDictionary["Jump"] && isGrounded){   
             isJumping=true;
             MoveJump=true;
-        }else if(controller.keyDictionary["Jump"] && isJumping){ // Faire un homingAttackPossible
+        } // Faire un homingAttackPossible
+        else if(controller.keyDictionary["Jump"] && isJumping){
             homingAttackPossible=true;
         }
 
@@ -116,19 +131,24 @@ public class SonicMovement : MonoBehaviour
             isfalling = false;
         }
 
-        // le moment ou il ne peut pas attaque
+        //Pour enlever la phase de saut
         if (isGrounded && !(rb.velocity.y > 0f) && !MoveJump){
             isJumping=false;    
         }
 
         
         if(controller.keyDictionary["Down"]){
-            if(currentSpeed==baseSpeed && !isLower){ // le faire baissé 
+
+            // le faire baissé 
+            if (currentSpeed==baseSpeed && !isLower){ 
                 animator.SetTrigger("lower");
                 isLower=true;
-            }else{ // Faire le Spindash
+            }
+            else // Faire le Spindash
+            { 
                 SpinDash=true;
             }
+
         }else{
             if(isLower){
                 animator.SetTrigger("back");
@@ -139,11 +159,11 @@ public class SonicMovement : MonoBehaviour
 
 
         //L'enemmie le plus proche sera attaqué
-        if(SonicActions.instance.objs.Count > 0 && !MoveHoming)
+        if(SonicActions.instance.objs.Count > 0 && !isHomingAttack)
         {
             targeted=FindNearEnenmy();
             if (targeted != null && isJumping && homingAttackPossible && Input.GetKeyDown(KeyCode.Space) && !isfalling){
-                MoveHoming = true;
+                isHomingAttack = true;
             }
         }
 
@@ -154,19 +174,15 @@ public class SonicMovement : MonoBehaviour
         animator.SetFloat("speed",currentSpeed);
         animator.SetBool("isfalling",isfalling);
         animator.SetBool("SpinDash",SpinDash);
-        
-        if(currentSpeed>baseSpeed){
-            animator.SetBool("baseSpeed",true);
-        }else{
-            animator.SetBool("baseSpeed",false);
-        }
+        animator.SetBool("baseSpeed", currentSpeed > baseSpeed);
+
         
     }
 
     void FixedUpdate(){
         // Code de la physique ici
 
-        if(MoveHoming){
+        if(isHomingAttack){
             HomingAttack();
         }
         if(MoveJump){
@@ -176,6 +192,7 @@ public class SonicMovement : MonoBehaviour
 
         Flip(horizonMov);
         Move(horizonMov);
+        UpdateSpeedPhase();
     }
 
     void DetectCollisions()
@@ -206,8 +223,8 @@ public class SonicMovement : MonoBehaviour
            Debug.Log("Collide right");
         }
 
-        Debug.DrawRay(leftRayOrigin, Vector2.up * rayLength, Color.red);
-        Debug.DrawRay(rightRayOrigin, Vector2.up * rayLength, Color.red);
+        //Debug.DrawRay(leftRayOrigin, Vector2.up * rayLength, Color.red);
+        //Debug.DrawRay(rightRayOrigin, Vector2.up * rayLength, Color.red);
 
     }
 
@@ -216,10 +233,11 @@ public class SonicMovement : MonoBehaviour
 
         //Application de l'inertie en fonction de certaines conditions
         //LA condition c'est si il n'appuie sur les boutons / si il fait un spindahs ou il change de cote
-        if ( (!controller.keyDictionary["Right"] && !controller.keyDictionary["Left"]) || InertiaPossible || SpinDash ){
+        if ( (!controller.keyDictionary["Right"] && !controller.keyDictionary["Left"]) || InertiaPossible || SpinDash && isGrounded ){
+
             if(currentSpeed>baseSpeed){ 
                 currentSpeed -= ((currentSpeed * Inertia) * Time.deltaTime);
-                currentSpeed = Mathf.Clamp(currentSpeed, baseSpeed, maxSpeed);
+                currentSpeed = Mathf.Max(currentSpeed, baseSpeed);
             }
 
             if(currentSpeed==baseSpeed && InertiaPossible){
@@ -229,38 +247,33 @@ public class SonicMovement : MonoBehaviour
             
         }else{ // Mouvement de base 
 
-            if(horizonMov<0){
-                lastSpeedDirection=-1;
-            }else{
-                lastSpeedDirection=1;
-            }
+            lastSpeedDirection = horizonMov < 0 ? -1 : 1;
 
             if (currentSpeed < maxSpeed){
                 currentSpeed += (speedIncreaseRate * Time.deltaTime);
+                currentSpeed = Mathf.Min(currentSpeed,maxSpeed);
             }
            
         }
+
+
         TrueSpeed = lastSpeedDirection * (currentSpeed - baseSpeed);
         rb.velocity = new Vector2(TrueSpeed, rb.velocity.y);
     }
 
     public void Jump(float jumpForce){
-        
         rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-        //rb.AddForce(Vector2.left * rb.velocity.x * airResistance, ForceMode2D.Impulse); 
     }
 
     public void HomingAttack()
     {
-        
         if (targeted!=null){
             transform.position = Vector2.MoveTowards(transform.position, targeted.transform.position, homingSpeed * Time.deltaTime);
         }else{
-            MoveHoming = false;
+            isHomingAttack = false;
         }
         
         homingAttackPossible=false;
-        
     }
     
     public void TakeDamage(GameObject collision){
@@ -271,51 +284,32 @@ public class SonicMovement : MonoBehaviour
     
 
     void Flip(float _horizon){
-        
-        if(_horizon>0.1f){
-            if(spriteRenderer.flipX){
-                 fliped=true;
-            }else{
-                fliped=false;
-            }
+        if (_horizon>=0f){
+            fliped = spriteRenderer.flipX;
             spriteRenderer.flipX=false;
-            
-        }else if(_horizon<-0.1f){
-            if(!spriteRenderer.flipX){
-                 fliped=true;
-            }else{
-                fliped=false;
-            }
-            spriteRenderer.flipX=true;
-            
+        }
+        else if(_horizon<0f){
+            fliped = !spriteRenderer.flipX;
+            spriteRenderer.flipX = true;
         }
 
-        if(fliped && currentSpeed>baseSpeed+offsetFlipChange){
+        if (fliped && currentSpeed>baseSpeed+offsetFlipChange){
             InertiaPossible=true;
             animator.SetTrigger("flip");
-        }
-        
+        }  
     }
 
     
     public GameObject FindNearEnenmy(){
         
-        GameObject nearObj=null;
+        GameObject nearObj = SonicActions.instance.objs[0];
 
         foreach(GameObject obj in SonicActions.instance.objs) {
 
-            if (!IsObstacleBetween(obj)){
-                if (nearObj == null)
-                {
+            if (!IsObstacleBetween(obj) && Vector3.Distance(gameObject.transform.position, obj.transform.position) < Vector3.Distance(gameObject.transform.position, nearObj.transform.position)){
                     nearObj = obj;
-                }
-                else{
-                    if (Vector3.Distance(gameObject.transform.position, obj.transform.position) < Vector3.Distance(gameObject.transform.position, nearObj.transform.position))
-                    {
-                        nearObj = obj;
-                    }
-                }
             }
+            
         }
 
        return nearObj; 
@@ -335,5 +329,29 @@ public class SonicMovement : MonoBehaviour
         Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
     }
 
+    void UpdateSpeedPhase()
+    {
+        if (currentSpeed < baseSpeed)
+        {
+            currentPhase = SpeedPhase.Slow;
+        }
+        else if (currentSpeed < cruiseSpeed)
+        {
+            currentPhase = SpeedPhase.Accelerating;
+        }
+        else if (currentSpeed < maxSpeed)
+        {
+            currentPhase = SpeedPhase.Cruising;
+        }
+        else if (currentSpeed < boostSpeed)
+        {
+            currentPhase = SpeedPhase.MaxSpeed;
+        }
+        else
+        {
+            currentPhase = SpeedPhase.Boosting;
+        }
+
+    }
 
 }

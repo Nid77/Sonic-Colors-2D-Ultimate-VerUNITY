@@ -10,11 +10,10 @@ public class SonicActions : MonoBehaviour
     public bool isboosted=false;
 
     private void Awake(){
-        if(instance!=null){
-            Debug.Log("Plus d'une instance de SonicActions dans la scene");
+        if(instance==null){
+            instance = this;
         }
-
-        instance = this;
+        
     }
     
 
@@ -34,7 +33,6 @@ public class SonicActions : MonoBehaviour
         if (other.CompareTag("Enemy"))
         {
             objs.Add(other.gameObject);
-            //Debug.Log("il est dedans :"+other.gameObject.name);
         }
     }
 
@@ -44,7 +42,6 @@ public class SonicActions : MonoBehaviour
         if (other.CompareTag("Enemy"))
         {
             objs.Remove(other.gameObject);
-            //Debug.Log("il a quitté :"+other.gameObject.name);
         }
     }
 }

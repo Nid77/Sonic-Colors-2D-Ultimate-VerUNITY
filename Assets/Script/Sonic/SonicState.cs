@@ -10,42 +10,45 @@ public class SonicState : MonoBehaviour
     public SpriteRenderer sprite;
 
     public Transform playerspawn;
-     public Transform sonic;
-     private Animator fadeSystem ;
+    public Transform sonic;
+    private Animator fadeSystem ;
 
-     private const float deathAnimaion=1.2f;
+    private const float deathAnimaion=1.2f;
 
 
     private void Awake(){
-        if(instance!=null){
-            Debug.Log("Plus d'une instance dans la scene");
+        if(instance==null){
+            instance = this;
         }
-
-        instance = this;
-
+        
         fadeSystem = GameObject.FindGameObjectWithTag("FadeSystem").GetComponent<Animator>();
-    
     }
 
 
     public void Damage(){
         if(!IsInvincible){
-            if(UI.instance.ringsCount==0&& UI.instance.lifesCount>0 ){
-            Death();
-            UI.instance.RemoveLife();
-            StartCoroutine(ReplacePlayer());
-        }else if(UI.instance.ringsCount==0 && UI.instance.lifesCount==0 ){
-            Death();
-            GameOverManager.instance.OnPlayerDeath();
-        }else{           
-            UI.instance.RemoveRings();     
-            IsInvincible=true;
-             SonicMovement.instance.Jump(30);
-            SonicMovement.instance.animator.SetTrigger("damage");
-            StartCoroutine(InvincibleFlash());
-            StartCoroutine(InvincibleDelay());
+            if(UI.instance.ringsCount==0){
+                Death();
+
+                if (UI.instance.lifesCount > 0){
+                    UI.instance.RemoveLife();
+                    StartCoroutine(ReplacePlayer());
+                }
+
+                if(UI.instance.lifesCount == 0)
+                    GameOverManager.instance.OnPlayerDeath();
+
+            }
+            else{           
+                UI.instance.RemoveRings();     
+                IsInvincible=true;
+                SonicMovement.instance.Jump(30);
+                SonicMovement.instance.animator.SetTrigger("damage");
             
-        }
+                StartCoroutine(InvincibleFlash());
+                StartCoroutine(InvincibleDelay());
+            
+            }
         }
         
     }
@@ -55,19 +58,21 @@ public class SonicState : MonoBehaviour
         SonicMovement.instance.enabled=false;
         SonicMovement.instance.rb.velocity=Vector3.zero;
         SonicMovement.instance.animator.SetTrigger("death");
-        CameraFollow.instance.IsAlive=false;
         SonicMovement.instance.Jump(40);
         //SonicMovement.instance.rb.bodyType = RigidbodyType2D.Kinematic;
         SonicMovement.instance.GetComponent<Collider2D>().enabled=false;
         SonicMovement.instance.GetComponent<BoxCollider2D>().enabled=false;
+
+        CameraFollow.instance.IsAlive = false;
     }
 
-    public void Respawn(){ // fonction utile lorsque sonic n'est pas present par default dans une scene
+    public void Respawn(){
         SonicMovement.instance.enabled=true;
         SonicMovement.instance.animator.SetTrigger("Respawn");
-        CameraFollow.instance.IsAlive=true;
         SonicMovement.instance.GetComponent<Collider2D>().enabled=true;
-        SonicMovement.instance.GetComponent<BoxCollider2D>().enabled=true;
+        SonicMovement.instance.GetComponent<BoxCollider2D>().enabled = true;
+        CameraFollow.instance.IsAlive = true;
+
     }
 
     public IEnumerator InvincibleFlash(){
@@ -92,7 +97,7 @@ public class SonicState : MonoBehaviour
 
      
 
-    public IEnumerator ReplacePlayer(){ // METTRE UNE TRANSITION TITLECARD a la place d'un foundu
+    public IEnumerator ReplacePlayer(){ // TODO METTRE UNE TRANSITION TITLECARD a la place d'un foundu
         //fadeSystem.SetTrigger("FadeIn");
         yield return new WaitForSeconds(deathAnimaion);
         Respawn();

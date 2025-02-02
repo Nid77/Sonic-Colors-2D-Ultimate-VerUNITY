@@ -16,13 +16,13 @@ public class UI : MonoBehaviour
 
 
     private void Awake(){
-        if(instance!=null){
-            Debug.Log("Plus d'une instance dans la scene");
+        if(instance==null){
+            instance = this;
         }
 
-        instance = this;
-         ringsCountText.text=ringsCount.ToString();
-         lifesCountText.text=lifesCount.ToString();
+        
+        ringsCountText.text=ringsCount.ToString();
+        lifesCountText.text=lifesCount.ToString();
     }
 
     public void AddRing(int amount ){

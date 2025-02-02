@@ -41,22 +41,17 @@ public class EnnemyAction : MonoBehaviour
 
     void Update()
     {
-        // il doit tourner quand il rencontre un mur
          isGroundedRight = Physics2D.Raycast(groundCheckL.position, Vector2.down, 0.1f, groundLayer);
          isGroundedLeft = Physics2D.Raycast(groundCheckR.position, Vector2.down, 0.1f, groundLayer);
-        
-
 
         if(isGroundedLeft && isGroundedRight ){
-                fliped=false;
+            fliped=false;
         }
         
 
         if((!fliped && isGroundedLeft && !isGroundedRight) || (!fliped && !isGroundedLeft && isGroundedRight) ){
             coef*=-1;
-           
             fliped=true;
-            Debug.Log("oui");
         }
 
         if(SonicMovement.instance.isJumping==true && SonicMovement.instance.targeted==gameObject){  
@@ -83,7 +78,6 @@ public class EnnemyAction : MonoBehaviour
             Destroy(gameObject);
             SonicMovement.instance.Jump(40);
             SonicBoost.instance.takeBoost(12);
-   
         }
         else if(collision.gameObject.CompareTag("Player")){
             SonicState.instance.Damage();
@@ -97,11 +91,7 @@ public class EnnemyAction : MonoBehaviour
     }
 
     void Flip(float horizon){
-        if(horizon>0){
-            spriteRenderer.flipX=true;
-        }else{
-            spriteRenderer.flipX=false;
-        }
+        spriteRenderer.flipX = horizon > 0 ? true : false;
     }
 
 
